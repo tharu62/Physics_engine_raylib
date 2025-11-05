@@ -1,10 +1,9 @@
-#include "application.h"
+#include "Application.h"
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
 int main(void)
 {
-    run();
+    // Main fuction that incapsulate the entire computation of the simulator.
+    SDFMecSim();
+    
     return 0;
 }
