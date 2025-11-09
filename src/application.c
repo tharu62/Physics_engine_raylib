@@ -61,14 +61,10 @@ void SDFMecSim()
         // Camera target follows player
         camera.target = (Vector2){ player.x + 20, player.y + 20 };
 
-        // Camera rotation controls
-        if (IsKeyDown(KEY_A)) camera.rotation--;
-        else if (IsKeyDown(KEY_S)) camera.rotation++;
-
-        // Camera zoom controls
         // Uses log scaling to provide consistent zoom speed
         camera.zoom = expf(logf(camera.zoom) + ((float)GetMouseWheelMove()*0.1f));
-
+        
+        // Camera zoom controls
         if (camera.zoom > 3.0f) camera.zoom = 3.0f;
         else if (camera.zoom < 0.1f) camera.zoom = 0.1f;
 
