@@ -2,6 +2,7 @@
 #define BODY_H
 
 #include "vector.h"
+#include "RK4.h"
 
 /** 
  * @brief Shapes are of 2d objects but ideally they rapresent a 3d object constrained in the 2d plane z=0
@@ -18,10 +19,12 @@ typedef enum {
  */ 
 typedef struct{
     shapes shape;
-    vec vertices[20];
+    vec vertices[20]; // relative positionof vertices from center of mass
+    int number_of_vertices;
     vec velocity;
     vec acceleration;
     vec centerOfMass;
+    vec rotation;
     float mass;
 } rigid_body;
 
@@ -29,10 +32,10 @@ typedef struct{
 void init_rigid_body(vec verteces[20], vec vel, vec acc, vec com, float mass, rigid_body* body);
 
 
-void compute_position(rigid_body* body);
-
-
 void compute_acceleration(rigid_body* body);
+
+
+void compute_position(rigid_body* body, float dt);
 
 
 void compute_rotation(rigid_body* body);

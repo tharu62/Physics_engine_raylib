@@ -1,5 +1,52 @@
 #include "vector.h"
 
+vec sum_(vec* a, vec* b){
+    vec temp;
+    temp.x = a->x + b->x;
+    temp.y = a->y + b->y;
+    return temp;
+}
+
+vec sub_(vec* a, vec* b){
+    vec temp;
+    temp.x = a->x - b->x;
+    temp.y = a->y - b->y;
+    return temp;
+}
+
+vec sum_const(vec* a, float b){
+    vec temp;
+    temp.x = a->x + b;
+    temp.y = a->y + b;
+    return temp;
+}
+
+vec sub_const(vec* a, float b){
+    vec temp;
+    temp.x = a->x - b;
+    temp.y = a->y - b;
+    return temp;
+}
+
+vec mult_const(vec* a, float b){
+    vec temp;
+    temp.x = a->x * b;
+    temp.y = a->y * b;
+    return temp;
+}
+
+vec div_const(vec* a, float b){
+    vec temp;
+    if(b != 0.0){
+        temp.x = a->x / b;
+        temp.y = a->y / b;
+        return temp;
+    }
+    else{
+        return *a;
+    }
+}
+
 // prodotto vettoriale per vettori 2d
 float cross_product(vec a, vec b){
     return (a.x*b.y - a.y*b.x);
