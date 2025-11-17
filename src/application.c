@@ -8,9 +8,10 @@ int screenHeight = 720;
 const Color RoyaleBlue = {48, 87, 225};
 const Color LavanderBlue = {206, 216, 247};
 const Color ResolutionBlue = {0, 32, 130};
+
 // constants
 const int body_count = 10;
-const int framerate = 60;               // [fps] 
+const int framerate = 80;                // [fps] 
 const float speed = 10.0;                // [m/s] 
 /*******************************************************************************************/
 
@@ -18,7 +19,7 @@ void PhysicsEngineRun()
 {
     // Initialization
     //--------------------------------------------------------------------------------------
-    SetTraceLogLevel(LOG_ERROR);        // Cut out log info on run time
+    SetTraceLogLevel(LOG_ERROR);                // Cut out log info on run time
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
     InitWindow(screenWidth, screenHeight, "Pyhisics Engine Simulator");
 
@@ -39,10 +40,14 @@ void PhysicsEngineRun()
         input_camera(&camera);
         if (IsWindowResized() && !IsWindowFullscreen()) window(&camera);
         // player update
-        if (IsKeyDown(KEY_RIGHT))   body_list[0].position.x += speed * GetFrameTime();     
-        if (IsKeyDown(KEY_LEFT))    body_list[0].position.x -= speed * GetFrameTime();
-        if (IsKeyDown(KEY_UP))      body_list[0].position.y -= speed * GetFrameTime();
-        if (IsKeyDown(KEY_DOWN))    body_list[0].position.y += speed * GetFrameTime();
+        vec d = {0,0};
+        float dt = GetFrameTime();
+        if (IsKeyDown(KEY_RIGHT))   d.x += speed * dt;
+        if (IsKeyDown(KEY_LEFT))    d.x -= speed * dt;
+        if (IsKeyDown(KEY_UP))      d.y += speed * dt;
+        if (IsKeyDown(KEY_DOWN))    d.y -= speed * dt;
+        if (IsKeyDown(KEY_F))       rotate(&body_list[0], PI / 2.f * dt);
+        if (d.x != 0.0f || d.y != 0.0f) move(&body_list[0], d);
         // position update
         compute_position(body_list, body_count, GetFrameTime());
         //----------------------------------------------------------------------------------
@@ -52,7 +57,7 @@ void PhysicsEngineRun()
         BeginDrawing();
 
             // reset background color
-            ClearBackground(RoyaleBlue);
+            ClearBackground(BLACK);
 
             // drawing on camera
             BeginMode2D(camera);
@@ -73,9 +78,9 @@ void PhysicsEngineRun()
     //--------------------------------------------------------------------------------------
     CloseWindow();                      // Close window and OpenGL context
     for(int i=0; i<body_count; ++i){
-        free(body_list[i].vertices);                // Free allocated vertices
-        free(body_list[i].transformed_vertices);    // ...
-        free(body_list[i].triangles);               // ...
+        free(body_list[i].vertices.array);                // Free allocated vertices
+        free(body_list[i].transformed_vertices.array);    // ...
+        free(body_list[i].triangles.array);               // ...
     }
     free(body_list);                    // Free allocated bodies
     //--------------------------------------------------------------------------------------

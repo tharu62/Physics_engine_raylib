@@ -7,7 +7,6 @@
 #include "vector.h"
 #include "RK4.h"
 
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
@@ -20,12 +19,22 @@ typedef enum {
     Box=1
 } shape_type;
 
-typedef struct{
-    // float x;
-    // float y;
+typedef struct {
+    float x;
+    float y;
     float sin;
     float cos;
 } rotation_matrix;
+
+typedef struct {
+    vec* array;
+    int len;
+} vec_array;
+
+typedef struct {
+    int* array;
+    int len;
+} int_array;
 
 /**
  * @brief A rigid body is a body of wich two random points always mantain the same distance over time. In other words, it cannot deform.
@@ -45,9 +54,9 @@ typedef struct{
     float radius;
     float width;
     float height;
-    vec* vertices;
-    vec* transformed_vertices;
-    int* triangles;
+    vec_array vertices;
+    vec_array transformed_vertices;
+    int_array triangles;
     bool to_transform;
 } rigid_body;
 
@@ -58,13 +67,19 @@ void move(rigid_body* body, vec amount);
 void move_to(rigid_body* body, vec new_position);
 
 //
+void project_vertices(vec_array* vertices, vec axis, float* min, float* max);
+
+//
+bool vertices_intersection(vec_array* vertA, vec_array* vertB);
+
+//
 void rotate(rigid_body* body, float amount);
 
 //
 void init_transform_matrix(rotation_matrix* t, vec* pos, float angle);
 
 //
-void transform(vec* v, rotation_matrix* t);
+void transform(vec* t_v, vec* v, rotation_matrix* t);
 
 //
 void rotate_vertices(rigid_body* body);
@@ -76,7 +91,7 @@ void init_circle_body(vec position, float density, float mass, float restitution
 void init_box_vertices(vec* vertices, float width, float height);
 
 //
-void init_box_transformed_vertices(vec* transformed_vertices, vec* vertices);
+void init_box_transformed_vertices(rigid_body* body);
 
 //
 void init_box_triangles(int* triangles);

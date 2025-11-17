@@ -10,17 +10,28 @@ void draw(Camera2D* camera, rigid_body* body_list, int body_count) {
             break;
 
         case Box:
-            Rectangle rec = {
-                body_list[i].position.x + body_list[i].transformed_vertices[0].x,
-                body_list[i].position.y + body_list[i].transformed_vertices[0].y,
-                body_list[i].width,
-                body_list[i].height
+            vec p[4] = {
+                body_list[i].transformed_vertices.array[0], // top-left
+                body_list[i].transformed_vertices.array[1], // top-right
+                body_list[i].transformed_vertices.array[2], // bottom-right
+                body_list[i].transformed_vertices.array[3]  // bottom-left
             };
-            Vector2 origin = { body_list[i].width/2.f, body_list[i].height/2.f };
+            for (int k = 0; k < 4; k++) {
+                p[k].y = -p[k].y;
+            }
+            Color color = body_list[i].color;
 
-            DrawRectanglePro(rec, origin, body_list[i].rotation * RAD2DEG, body_list[i].color);
+            for(int j=0; j<body_count; ++j){
+                if(vertices_intersection(&body_list[i].transformed_vertices, &body_list[j].transformed_vertices) && i!=j){
+                    color = RED;
+                    break;
+                }
+            }
+            DrawLineV(p[0], p[1], color);
+            DrawLineV(p[1], p[2], color);
+            DrawLineV(p[2], p[3], color);
+            DrawLineV(p[3], p[0], color);
             break;
-
         default:
             break;
         }
