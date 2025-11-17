@@ -53,6 +53,25 @@
 //     bool to_transform;
 // } rigid_body;
 
+float min(float a, float b) {
+    if (a < b) {
+        return a;
+    } else {
+        return b;
+    }
+}
+
+void find_mean(vec_array* v, vec* v_out){
+    float sum_x = 0.f;
+    float sum_y = 0.f;
+
+    for (int i=0; i<v->len; ++i) {
+        sum_x += v->array[i].x;
+        sum_y += v->array[i].y;
+    }
+    *v_out = (vec){sum_x/(float)v->len, sum_y/(float)v->len};
+}
+
 void move(rigid_body* body, vec amount){
     body->position.x += amount.x;
     body->position.y += amount.y;
@@ -78,7 +97,9 @@ void project_vertices(vec_array* vertices, vec axis, float* min, float* max){
 }
 
 // separate axis theorem
-bool vertices_intersection(vec_array* vertA, vec_array* vertB){
+bool sat_vertices_intersection(vec_array* vertA, vec_array* vertB, vec *normal, float* depth){
+    *normal = (vec){0.f,0.f};
+    *depth = __FLT_MAX__;    
 
     for(int i=0; i<vertA->len; ++i){
         vec va;
@@ -96,8 +117,13 @@ bool vertices_intersection(vec_array* vertA, vec_array* vertB){
         float maxB = __FLT_MIN__;
         project_vertices(vertA, axis, &minA, &maxA);
         project_vertices(vertB, axis, &minB, &maxB);
-        if(minA >= maxB || minB >= maxA){
+        if(minA >= maxB || minB >= maxA){ // found separation
             return false;
+        }
+        float axis_depth = min(maxB - minA, maxA - minB);
+        if (axis_depth < *depth) {
+            *depth = axis_depth;
+            *normal = axis;
         }
     }
 
@@ -117,10 +143,29 @@ bool vertices_intersection(vec_array* vertA, vec_array* vertB){
         float maxB = __FLT_MIN__;
         project_vertices(vertA, axis, &minA, &maxA);
         project_vertices(vertB, axis, &minB, &maxB);
-        if(minA >= maxB || minB >= maxA){
+        if(minA >= maxB || minB >= maxA){ // found separation
             return false;
         }
+        float axis_depth = min(maxB - minA, maxA - minB);
+        if (axis_depth < *depth) {
+            *depth = axis_depth;
+            *normal = axis;
+        }
     }
+    *depth /= len(*normal);
+    normalize_ref(normal);
+
+    vec centerA, centerB; 
+    find_mean(vertA, &centerA);
+    find_mean(vertB, &centerB);
+
+    vec direction;
+    sub_val(&centerB, &centerA, &direction);
+
+    if(dot_product(direction, *normal) < 0){
+        *normal = (vec){-normal->x, -normal->y};
+    }
+
     return true;
 }
 
@@ -272,11 +317,20 @@ void compute_collisions_circles(rigid_body* circle1, rigid_body* circle2){
     return;
 }
 
-void compute_collision_polygons(){
+void compute_collisions_polygons(rigid_body* body_list, rigid_body* body, int body_count, int this_polygon){
 
+    for(int i=0; i<body_count; ++i){ 
+        vec normal;
+        float depth;
+        if(sat_vertices_intersection(&body->transformed_vertices, &body_list[i].transformed_vertices, &normal, &depth) && i!=this_polygon ){
+            move(body, (vec){-normal.x * depth / 2.f, -normal.y * depth / 2.f});
+            move(&body_list[i], (vec){normal.x * depth / 2.f, normal.y * depth / 2.f});
+        }
+    }
 }
 
 void compute_position(rigid_body* body_list, int body_count, float dt){
+    // Circles
     // resolve colllisions
     // for (int i=0; i< body_count; ++i) {
     //     for (int j=0; j<body_count; ++j){
@@ -284,9 +338,11 @@ void compute_position(rigid_body* body_list, int body_count, float dt){
     //     }
     // }
 
+    // Boxes
     for (int i=0; i<body_count; ++i) {
         rotate(&body_list[i], (float) (PI / 2.f * dt));
         rotate_vertices(&body_list[i]);
+        compute_collisions_polygons(body_list, &body_list[i], body_count, i);
     }
 
     return;

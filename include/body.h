@@ -60,6 +60,8 @@ typedef struct{
     bool to_transform;
 } rigid_body;
 
+float min(float a, float b);
+
 //
 void move(rigid_body* body, vec amount);
 
@@ -70,7 +72,7 @@ void move_to(rigid_body* body, vec new_position);
 void project_vertices(vec_array* vertices, vec axis, float* min, float* max);
 
 //
-bool vertices_intersection(vec_array* vertA, vec_array* vertB);
+bool sat_vertices_intersection(vec_array* vertA, vec_array* vertB, vec *normal, float* depth);
 
 //
 void rotate(rigid_body* body, float amount);
@@ -103,9 +105,12 @@ void init_box_body(vec position, float density, float mass, float restitution, b
 void compute_acceleration(rigid_body* body);
 
 //
-void compute_position(rigid_body* body, int body_count, float dt);
+void compute_collisions_circles(rigid_body* circle1, rigid_body* circle2);
 
 //
-void compute_collisions_circles(rigid_body* circle1, rigid_body* circle2);
+void compute_collisions_polygons(rigid_body* body_list, rigid_body* body, int body_count, int this_polygon);
+
+//
+void compute_position(rigid_body* body, int body_count, float dt);
 
 #endif // BODY_H

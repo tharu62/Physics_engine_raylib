@@ -62,7 +62,8 @@ void PhysicsEngineRun()
             // drawing on camera
             BeginMode2D(camera);
 
-                draw(&camera, body_list, body_count);
+                // draw(&camera, body_list, body_count);
+                draw_with_sat_detection(&camera, body_list, body_count);
 
             EndMode2D();
             
