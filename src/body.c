@@ -1,58 +1,5 @@
 #include "body.h"
 
-// #ifndef M_PI
-// #define M_PI 3.14159265358979323846
-// #endif
-
-// /** 
-//  * @brief Shapes are of 2d objects but ideally they rapresent a 3d object constrained in the 2d plane z=0
-//  */
-// typedef enum {
-//     Circle=0,
-//     Box=1
-// } shape_type;
-
-// typedef struct {
-//     float x;
-//     float y;
-//     float sin;
-//     float cos;
-// } rotation_matrix;
-
-// typedef struct {
-//     vec* array;
-//     int len;
-// } vec_array;
-
-// typedef struct {
-//     int* array;
-//     int len;
-// } int_array;
-
-// /**
-//  * @brief A rigid body is a body of wich two random points always mantain the same distance over time. In other words, it cannot deform.
-//  */ 
-// typedef struct{
-//     shape_type shape;
-//     Color color;
-//     vec position;
-//     vec linear_vel;
-//     float rotation;
-//     float rotational_vel;
-//     float density;
-//     float mass;
-//     float restitution;
-//     float area;
-//     bool static_;
-//     float radius;
-//     float width;
-//     float height;
-//     vec_array vertices;
-//     vec_array transformed_vertices;
-//     int_array triangles;
-//     bool to_transform;
-// } rigid_body;
-
 float min(float a, float b) {
     if (a < b) {
         return a;
@@ -461,7 +408,7 @@ void compute_collisions_circles_polygon(rigid_body* circle, rigid_body* polygon)
 }
 
 /**
- * @todo not efficient updating method, ...
+ * @todo more efficient updating method, ...
  */
 void compute_position(rigid_body* body_list, int body_count, float dt){
     

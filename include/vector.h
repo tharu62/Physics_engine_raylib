@@ -8,7 +8,7 @@
 
 #define vec Vector2
 
-// // vettore 2d
+// Vector2 type definition :
 // typedef struct{
 //     float x;
 //     float y;

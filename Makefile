@@ -6,11 +6,11 @@ BUILD_DIR = build
 INCL_DIR = include
 
 ifeq ($(OS),Windows_NT)
-	RAYLIB_INCL_DIR = raylib/include
-	RAYLIB_LIB_DIR = raylib/lib
+	RAYLIB_INCL_DIR = raylib/raylib_windows/include
+	RAYLIB_LIB_DIR = raylib/raylib_windows/lib
 else
-	RAYLIB_INCL_DIR = raylib_linux/include
-	RAYLIB_LIB_DIR = raylib_linux/lib
+	RAYLIB_INCL_DIR = raylib/raylib_linux/include
+	RAYLIB_LIB_DIR = raylib/raylib_linux/lib
 endif
 
 # Find source files

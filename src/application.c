@@ -49,7 +49,7 @@ void PhysicsEngineRun()
         if (IsKeyDown(KEY_F))       rotate(&body_list[0], PI / 2.f * dt);
         if (d.x != 0.0f || d.y != 0.0f) move(&body_list[0], d);
         // position update
-        // compute_position(body_list, body_count, GetFrameTime());
+        compute_position(body_list, body_count, GetFrameTime());
         //----------------------------------------------------------------------------------
 
         // Draw updated drawables
@@ -62,8 +62,8 @@ void PhysicsEngineRun()
             // drawing on camera
             BeginMode2D(camera);
 
-                // draw(&camera, body_list, body_count);
-                draw_with_sat_detection(&camera, body_list, body_count);
+                draw(&camera, body_list, body_count);
+                // draw_with_sat_detection(&camera, body_list, body_count);
 
             EndMode2D();
             
