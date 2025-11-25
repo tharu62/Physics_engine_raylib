@@ -8,7 +8,11 @@
 #include "vector.h"
 #include "RK4.h"
 
+
+
 /******************************************************* BODY FUNCTIONS ********************************************************** */
+
+
 
 /** 
  * @brief Shapes are rapresentations of 2d objects but ideally they rapresent a 3d object constrained in a 2d plane P := { P(x,y,z) : x=apha; y=beta; z=0;}.
@@ -23,6 +27,7 @@ typedef enum {
     Box=1,           // 4 vertices
     Polygon=2      // N arbitrary vertices 
 } shape_type;
+
 
 /**
  * @brief A standard Rotation Matrix from Linear Algebra containing the minimum amout of information for the computation. 
@@ -40,6 +45,7 @@ typedef struct {
     float cos;
 } rotation_matrix;
 
+
 /**
  * @brief A standard dinamyc array for Vector2.
  * @param array is the array of type Vector2 to dynimically allocate.
@@ -50,6 +56,7 @@ typedef struct {
     int len;
 } vec_array;
 
+
 /**
  * @brief A standards dinamyc array for int.
  * @param array is the array of type int to dynimically allocate.
@@ -59,6 +66,7 @@ typedef struct {
     int* array;
     int len;
 } int_array;
+
 
 /**
  * @brief A rigid body is a body of wich two random points always mantain the same distance over time. In other words, it cannot deform.
@@ -77,6 +85,7 @@ typedef struct {
  *  @param width
  *  @param height
  *  @param to_transform
+ *  @param force
  * @param vertices is the array containing the vertices of the body relative to the origin of the coordinate system. 
  * This means the absolute position of each vertices is calculated by adding <position> .
  * @param transformed_vertices is the array containing the vertices transformed in their absolute position after addition of the position
@@ -99,6 +108,7 @@ typedef struct{
     float width;
     float height;
     bool to_transform;
+    vec force;
     int_array triangles;
     vec_array vertices;
     vec_array transformed_vertices;
@@ -107,8 +117,6 @@ typedef struct{
 
 /**
  * @brief returns the minimum between the two given floats.
- * @param a
- * @param b
  */
 float min(float a, float b);
 
@@ -141,6 +149,11 @@ void move(rigid_body* body, vec amount);
  */
 void move_to(rigid_body* body, vec new_position);
 
+
+/**
+ * @todo
+ */
+void add_force(rigid_body* body, vec force_amount);
 
 /**
  * @brief Projects an array of vertices onto the given axis and returns the scalar min/max projection values.
@@ -298,13 +311,6 @@ void init_box_body(vec position, float density, float mass, float restitution, b
 
 
 /**
- * @brief Compute acceleration for a body from forces (gravity & external). TODO: implement.
- * @param body body to compute acceleration for
- */
-void compute_acceleration(rigid_body* body);
-
-
-/**
  * @brief Compute and apply collision response for two circles (simple positional correction).
  * @param circle1 first circle
  * @param circle2 second circle
@@ -328,6 +334,12 @@ void compute_collisions_polygons(rigid_body* bodyA, rigid_body* bodyB);
  */
 void compute_collisions_circles_polygon(rigid_body* circle, rigid_body* polygon);
 
+/**
+ * @brief Compute the forces and velocity of the body and update the position and rotation accordingly.
+ * @param body polygon/box/circle body
+ * @param dt timestep in seconds
+ */
+void compute_forces_and_inertia_step(rigid_body* body, float dt);
 
 /**
  * @brief Update positions and perform collision checks for all bodies in the provided list.

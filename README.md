@@ -5,6 +5,6 @@ The main use of this application will be the simulation of mechanisms with a sin
 
 To clean the build: make clean
 
-To compile the code: make sim
+To compile the code: make
 
 To run the code: make run

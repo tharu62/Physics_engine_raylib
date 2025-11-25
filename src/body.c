@@ -1,5 +1,7 @@
 #include "body.h"
 
+#define e 0.3f // constant that defines the elasticity of the collision ( e = 0 -> ure elastic collision, e = 1 -> pure anelastic collision)
+
 float min(float a, float b) {
     assert(a != NAN && b != NAN);
     if (a < b) {
@@ -31,6 +33,11 @@ void move(rigid_body* body, vec amount){
 void move_to(rigid_body* body, vec new_position){
     body->position = new_position;
     body->to_transform = true;
+}
+
+void add_force(rigid_body* body, vec force_amount){
+    sum_ref(&body->force, &force_amount);
+    return;
 }
 
 void project_vertices(vec_array* vertices, vec axis, float* min, float* max){
@@ -267,20 +274,21 @@ void transform_vertices(rigid_body* body){
 
 void init_circle_body(vec position, float density, float mass, float restitution, bool static_, float radius, Color color, rigid_body* body){
 
-    body->shape         = Circle;    
-    body->color         = color;    
-    body->position      = position;
-    body->linear_vel   = (vec){0.f,0.f};
-    body->rotation      = 0.f;
-    body->rotational_vel = 0.f;
-    body->density       = density;
-    body->restitution   = restitution;
-    body->area          = radius * PI;
-    body->static_       = static_;
-    body->radius        = radius;
-    body->width         = 0.f;
-    body->height        = 0.f;
-    body->to_transform  = true;
+    body->shape                 = Circle;    
+    body->color                  = color;    
+    body->position              = position;
+    body->linear_vel           = (vec){0.f,0.f};
+    body->rotation              = 0.f;
+    body->rotational_vel     = 0.f;
+    body->density               = density;
+    body->restitution          = restitution;
+    body->area                    = radius * PI;
+    body->static_                = static_;
+    body->radius                  = radius;
+    body->width                   = 0.f;
+    body->height                  = 0.f;
+    body->force                   = (vec){0.f, 0.f};
+    body->to_transform      = true;
 
     if (mass != 0) 
         body->mass = mass;
@@ -330,20 +338,21 @@ void init_box_triangles(int* triangles){
 
 void init_box_body(vec position, float density, float mass, float restitution, bool static_, float width, float height, Color color, rigid_body* body){
 
-    body->shape         = Box;
-    body->color         = color;    
-    body->position      = position;
-    body->linear_vel   = (vec){0.f,0.f};
-    body->rotation      = 0.f;
-    body->rotational_vel = 0.f;
-    body->density       = density;
-    body->restitution   = restitution;
-    body->area          = width * height;
-    body->static_       = static_;
-    body->radius        = 0.f;
-    body->width         = width;
-    body->height        = height;
-    body->to_transform  = true;
+    body->shape                 = Box;
+    body->color                  = color;    
+    body->position              = position;
+    body->linear_vel           = (vec){0.f,0.f};
+    body->rotation              = 0.f;
+    body->rotational_vel     = 0.f;
+    body->density               = density;
+    body->restitution          = restitution;
+    body->area                    = width * height;
+    body->static_                = static_;
+    body->radius                  = 0.f;
+    body->width                   = width;
+    body->height                  = height;
+    body->force                    = (vec){0.f, 0.f}; 
+    body->to_transform       = true;
 
     if (mass != 0) 
         body->mass = mass;
@@ -364,12 +373,6 @@ void init_box_body(vec position, float density, float mass, float restitution, b
     return;
 }
 
-// unused
-void compute_acceleration(rigid_body* body){
-    // garvity + external forces.
-    return;
-}
-
 void compute_collisions_circles(rigid_body* circle1, rigid_body* circle2){
     if (!circles_collide(circle1, circle2)) return; 
     vec normal;
@@ -378,6 +381,7 @@ void compute_collisions_circles(rigid_body* circle1, rigid_body* circle2){
     float distance = dist(circle1->position, circle2->position);
     float radii = circle1->radius + circle2->radius;
     float depth = radii - distance;
+
     if(distance < radii){ // collision
         vec temp1;
         vec temp2;
@@ -385,8 +389,17 @@ void compute_collisions_circles(rigid_body* circle1, rigid_body* circle2){
         div_const_ref(&temp1, 2.f);
         mult_const_val(&normal, depth, &temp2);
         div_const_ref(&temp2, 2.f);
+
+        float v_rel = dot_product((vec){circle2->linear_vel.x - circle1->linear_vel.x, circle2->linear_vel.y - circle1->linear_vel.y}, normal);
+        float j = - ((1 + e) * v_rel) / (1/circle1->mass + 1/circle2->mass) ;
+
         move(circle1, temp1);
+        // mult_const_val(&(vec){-normal.x, -normal.y}, len(circle1->linear_vel), &circle1->linear_vel); 
+        sum_ref(&circle1->linear_vel, &(vec){-normal.x*j/circle1->mass, -normal.y*j/circle1->mass});
+
         move(circle2, temp2);
+        // mult_const_val(&normal, len(circle2->linear_vel), &circle2->linear_vel);
+        sum_ref(&circle2->linear_vel, &(vec){normal.x*j/circle2->mass, normal.y*j/circle2->mass});
     }
     return;
 }
@@ -395,8 +408,18 @@ void compute_collisions_polygons(rigid_body* bodyA, rigid_body* bodyB){
     vec normal={0.f,0.f};
     float depth=0.f;
     if(sat_polygons(&bodyA->transformed_vertices, &bodyB->transformed_vertices, &normal, &depth) ){
+        
+        float v_rel = dot_product((vec){bodyB->linear_vel.x - bodyA->linear_vel.x, bodyB->linear_vel.y - bodyA->linear_vel.y}, normal);
+        float j = - ((1 + e) * v_rel) / (1/bodyA->mass + 1/bodyB->mass) ;
+
         move(bodyA, (vec){-normal.x * depth / 2.f, -normal.y * depth / 2.f});
+        // mult_const_val(&(vec){-normal.x, -normal.y}, len(bodyA->linear_vel), &bodyA->linear_vel);
+        sum_ref(&bodyA->linear_vel, &(vec){-normal.x*j/bodyA->mass, -normal.y*j/bodyA->mass});
+        
         move(bodyB, (vec){normal.x * depth / 2.f, normal.y * depth / 2.f});
+        // mult_const_val(&normal, len(bodyB->linear_vel), &bodyB->linear_vel);
+        sum_ref(&bodyB->linear_vel, &(vec){normal.x*j/bodyB->mass, normal.y*j/bodyB->mass});
+        
         transform_vertices(bodyA);
         transform_vertices(bodyB);
     }
@@ -407,11 +430,38 @@ void compute_collisions_circles_polygon(rigid_body* circle, rigid_body* polygon)
     vec normal = {0.f,0.f};
     float depth = 0.f;
     if(sat_circles_polygons(circle, polygon, &normal, &depth)){
+        float v_rel = dot_product((vec){polygon->linear_vel.x - circle->linear_vel.x, polygon->linear_vel.y - circle->linear_vel.y}, normal);
+        float j = - ((1 + e) * v_rel) / (1/polygon->mass + 1/circle->mass) ;
+        
         move(circle, (vec){-normal.x * depth / 2.f, -normal.y * depth / 2.f});
+        // mult_const_val(&(vec){-normal.x, -normal.y}, len(circle->linear_vel), &circle->linear_vel);
+        sum_ref(&circle->linear_vel, &(vec){-normal.x*j/circle->mass, -normal.y*j/circle->mass});
+        
         move(polygon, (vec){normal.x * depth / 2.f, normal.y * depth / 2.f}); //only moves center of polygon
+        // mult_const_val(&normal, len(polygon->linear_vel), &polygon->linear_vel);
+        sum_ref(&polygon->linear_vel, &(vec){normal.x*j/polygon->mass, normal.y*j/polygon->mass});
+        
         transform_vertices(polygon);
     }
     return;
+}
+
+void compute_forces_and_inertia_step(rigid_body* body, float dt){
+    // trasaltion
+    vec force_impulse = (vec){0.f,0.f};
+    mult_const_val(&body->force, dt, &force_impulse); // update linear velocity of the body with forces
+    sum_ref(&body->linear_vel, &force_impulse);
+    vec amount = {0.f,0.f}; 
+    mult_const_val(&body->linear_vel, dt, &amount);
+    move(body, amount);                                                    // move the body of (velocity * dt) amount
+    transform_vertices(body);                                          // update vertices position
+    
+    // rotation
+    body->rotational_vel += body->rotational_vel * dt;      // update rotational velocity of the body
+    rotate(body, body->rotational_vel*dt);                       // rotate the body  
+    // rotate(&body_list[i], (float) (PI / 2.f * dt));
+
+    body->force = (vec){0.f, 0.f};                                       // reset forces 
 }
 
 /**
@@ -421,32 +471,29 @@ void compute_position(rigid_body* body_list, int body_count, float dt){
     
     for(int i=0; i<body_count; ++i){
 
+        /****************** compute movement from inertia and forces *************/
+        compute_forces_and_inertia_step(&body_list[i], dt);
+        /**********************************************************************/
+
+        /************************* compute collisions ****************************/
         for (int j=0; j<body_count; ++j) {
 
             if (i!=j) {
 
                 if (body_list[i].shape == Circle) {
-
                     // i =  circle, j = circle
                     if (body_list[j].shape ==  Circle) {
                         compute_collisions_circles(&body_list[i], &body_list[j]);
                     }
-                    
                     // i= circle, j = box
                     if (body_list[j].shape == Box) {
-                        // printf("coll 1, index: %d\n", i);
                         compute_collisions_circles_polygon(&body_list[i], &body_list[j]);
                     }
                 }
 
                 if (body_list[i].shape == Box) {
-
-                    // rotate(&body_list[i], (float) (PI / 2.f * dt));
-                    transform_vertices(&body_list[i]);
-                    
                     // i = box, j = circle
                     if (body_list[j].shape ==  Circle) {
-                        // printf("coll 2\n");
                         compute_collisions_circles_polygon(&body_list[j], &body_list[i]);
                     }
                     // i = box, j = box
@@ -457,6 +504,7 @@ void compute_position(rigid_body* body_list, int body_count, float dt){
             }
         
         }
+        /******************************************************************* */
     }
 
     return;

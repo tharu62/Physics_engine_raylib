@@ -10,9 +10,9 @@ const Color LavanderBlue = {206, 216, 247};
 const Color ResolutionBlue = {0, 32, 130};
 
 // constants
-const int body_count = 1000;             // number of bodies in the simulation
-const int framerate = 80;              // [fps] 
-const float speed = 10.0;               // [m/s] 
+const int body_count = 10;             // number of bodies in the simulation
+const int framerate = 60;              // [fps] 
+const float speed = 5.f;               // [m/s] 
 /*******************************************************************************************/
 
 void PhysicsEngineRun()
@@ -20,7 +20,9 @@ void PhysicsEngineRun()
     // Initialization
     //--------------------------------------------------------------------------------------
     SetTraceLogLevel(LOG_ERROR);                // Cut out log info on run time
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+    // SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+
     InitWindow(screenWidth, screenHeight, "Pyhisics Engine Simulator");
 
     Camera2D camera = { 0 };
@@ -36,20 +38,11 @@ void PhysicsEngineRun()
     {
         // Update values of drawables
         //----------------------------------------------------------------------------------
-        // camera update
-        input_camera(&camera);
+        input_camera(&camera);            // camera update
         if (IsWindowResized() && !IsWindowFullscreen()) window(&camera);
-        // player update
-        vec d = {0,0};
-        float dt = GetFrameTime();
-        if (IsKeyDown(KEY_RIGHT))   d.x += speed * dt;
-        if (IsKeyDown(KEY_LEFT))    d.x -= speed * dt;
-        if (IsKeyDown(KEY_UP))      d.y += speed * dt;
-        if (IsKeyDown(KEY_DOWN))    d.y -= speed * dt;
-        if (IsKeyDown(KEY_F))       rotate(&body_list[0], PI / 2.f * dt);
-        if (d.x != 0.0f || d.y != 0.0f) move(&body_list[0], d);
+        input_player(body_list);            // player update
         // position update
-        compute_position(body_list, body_count, GetFrameTime());
+        compute_position(body_list, body_count, GetFrameTime()); 
         //----------------------------------------------------------------------------------
 
         // Draw updated drawables
@@ -100,7 +93,8 @@ Color RandomColor() {
 
 void init_camera(Camera2D* camera){
     // camera.target = (Vector2){ player.x + 20.0f, player.y + 20.0f };
-    camera->target = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    // camera->target = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
+    camera->target = (Vector2){ 0.f,0.f };
     camera->offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera->rotation = 0.0f;
     camera->zoom = 20.0f;
@@ -138,15 +132,49 @@ void init_bodies(rigid_body* body_list, int body_count) {
 
 void input_camera(Camera2D* camera){
 
-    // Camera target follows player
-    camera->target = (vec){0,0};
     // Uses log scaling to provide consistent zoom speed
     camera->zoom = expf(logf(camera->zoom) + ((float)GetMouseWheelMove()*0.1f));
-    // Camera zoom controls
-    // if (camera->zoom > 3.0f) camera->zoom = 3.0f;
-    // else if (camera->zoom < 0.1f) camera->zoom = 0.1f;
+
     // Camera reset (zoom and rotation)
     if (IsKeyPressed(KEY_R))camera->zoom = 15.0f;
+
+    // Translate based on mouse right click
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT))
+    {
+        Vector2 delta = GetMouseDelta();
+        delta = Vector2Scale(delta, -1.0f/camera->zoom);
+        camera->target = Vector2Add(camera->target, delta);
+    }
+}
+
+void input_player(rigid_body* body_list){
+    // vec d = {0.f,0.f};
+    float dt = GetFrameTime();
+    if (IsKeyDown(KEY_RIGHT)) {
+        // d.x += speed * dt;
+        // sum_ref(&body_list[0].linear_vel, &(vec){speed, 0.f});
+        body_list[0].linear_vel = (vec){speed, 0.f};
+    }
+    if (IsKeyDown(KEY_LEFT)) {     
+        // d.x -= speed * dt;
+        // sub_ref(&body_list[0].linear_vel, &(vec){seed, 0.f});
+        body_list[0].linear_vel = (vec){-speed, 0.f};
+    }
+    if (IsKeyDown(KEY_UP)) {         
+        // d.y += speed * dt;
+        // sum_ref(&body_list[0].linear_vel, &(vec){0.f, speed});
+        body_list[0].linear_vel = (vec){0.f, speed};
+    }
+    if (IsKeyDown(KEY_DOWN)) {
+        // d.y -= speed * dt;
+        // sub_ref(&body_list[0].linear_vel, &(vec){0.f, speed});
+        body_list[0].linear_vel = (vec){0.f, -speed};
+    }
+    if (IsKeyDown(KEY_F)) {           
+        // rotate(&body_list[0], (float) (PI / 2.f * dt));
+        body_list[0].rotational_vel += (float) (PI / 2.f * dt);
+    }
+    // if (d.x != 0.0f || d.y != 0.f)        move(&body_list[0], d);
 }
 
 void window(Camera2D* camera){
